@@ -1,0 +1,3 @@
+fullname	blacklisted_accounts
+Casey Chan	alice,frank
+Gary K Chen	alice,frank
