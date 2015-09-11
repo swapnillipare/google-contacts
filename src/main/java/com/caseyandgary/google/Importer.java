@@ -1,3 +1,5 @@
+package com.caseyandgary.google;
+
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -16,6 +18,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Properties;
 import java.net.MalformedURLException;
 import java.security.GeneralSecurityException;
 import com.google.api.client.http.HttpTransport;
@@ -77,10 +80,11 @@ public class Importer{
   private PrintWriter modifyLdapWriter;
   private String atomMyContacts = null;
   private String atomOtherContacts = null;
-  Map<String,LdapContactBean> ldapBeanMap;
-  Map<String,String[]> pullOnlyMap;
-  List<String> ldapNames;
-  Set<String> googleNames;
+  private Map<String,LdapContactBean> ldapBeanMap;
+  private Map<String,String[]> pullOnlyMap;
+  private List<String> ldapNames;
+  private Set<String> googleNames; 
+  private Properties userProp;
 
   public static GoogleCredential createCredentialForServiceAccount(
     HttpTransport transport,
@@ -98,19 +102,20 @@ public class Importer{
         .build();
   }
 
-  public Importer(String urlString,String groupUrlString)
+  public Importer(String urlString,String groupUrlString,Properties userProp)
   throws Exception{
+	this.userProp = userProp;
     System.err.println("The time is now: "+now.toString());
     fullContactFeedURL = new URL(urlString); // to be used for queries
     fullGroupFeedURL = new URL(groupUrlString); // to be used for queries
     service = new ContactsService("LDAP insert");
-    String clientId = "141885141025-r4jgisst56ue21i9ft1v63c7ak42uc74.apps.googleusercontent.com";
-    String serviceEmail = "141885141025-r4jgisst56ue21i9ft1v63c7ak42uc74@developer.gserviceaccount.com";
+    String clientId = userProp.getProperty("CLIENT_ID");
+    String serviceEmail = userProp.getProperty("SERVICE_EMAIL");
     // Set up the HTTP transport and JSON factory
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
     String accessScope ="https://www.google.com/m8/feeds"; 
-    GoogleCredential gc = createCredentialForServiceAccount(httpTransport,jsonFactory,serviceEmail,Collections.singleton(accessScope),new File("m3teknik1-8d34c898e36a.p12"));
+    GoogleCredential gc = createCredentialForServiceAccount(httpTransport,jsonFactory,serviceEmail,Collections.singleton(accessScope),new File(userProp.getProperty("PRIVATE_KEY_FILE")));
     if(!gc.refreshToken()){
       System.err.println("Can't refresh token");
       System.exit(1);
@@ -750,9 +755,13 @@ public void setMyContacts()
       user = args[arg++];
       password = args[arg++];
       infile = args[arg++];
+      String propertyFileName = args[arg++];
+      Properties properties = new Properties();
+      FileInputStream in = new FileInputStream(propertyFileName);
+      properties.load(in);
       String urlString = "https://www.google.com/m8/feeds/contacts/"+user+"/full";
       String groupUrlString = "https://www.google.com/m8/feeds/groups/"+user+"/full";
-      Importer importer = new Importer(urlString,groupUrlString);
+      Importer importer = new Importer(urlString,groupUrlString,properties);
       importer.parsePullOnly();
       importer.setMyContacts();
       importer.parseLdapBean(infile);

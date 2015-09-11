@@ -1,0 +1,3 @@
+CLIENT_ID = clientid
+SERVICE_EMAIL = serviceemail
+PRIVATE_KEY_FILE = file.p12

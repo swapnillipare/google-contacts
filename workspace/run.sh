@@ -1,14 +1,13 @@
 #!/bin/bash
 
-JAVA_HOME=/usr/java/jdk1.7.0_55
-client_dir='/home/garyc/code/google-contacts/gdata/java'
-api_dir='/home/garyc/code/google-contacts/google-api-java-client/libs'
-
+#JAVA_HOME=/usr/java/jdk1.7.0_55
+#JAR_FILE=/home/garyc/code/google-contacts/target/google-contact-editor.jar
+propfile='properties.txt'
 export LANG=en_US.UTF-8
-cp="$api_dir/*:$client_dir/deps/*:$client_dir/lib/*:."
+
 operations='add del modify'
 
-cd $HOME/code/google-contacts/classes
+cd $HOME/code/google-contacts/workspace
 
 #exit 1
 
@@ -23,8 +22,7 @@ do
   /usr/sbin/slapcat -s "ou=Public,dc=pioneerind,dc=com" -a $filter | $HOME/bin/filterExtraFields.pl | $HOME/bin/ldif2tab.pl > $user.tab
   lc=`cat $user.tab|wc -l`
   if [ $lc -gt 1 ] ; then
-    #$JAVA_HOME/bin/java -cp $cp Importer $user $email $pw $user.tab
-    $JAVA_HOME/bin/java -cp $cp Importer $user $email $pw $user.tab  2>$user.err
+    java -jar ../target/google-contact-editor.jar $user $email $pw $user.tab $propfile
     for operation in $operations
     do
       lc=`cat $user.$operation|wc -l`
